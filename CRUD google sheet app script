@@ -1,0 +1,64 @@
+const url = "<url link to your google sheet file>"
+
+function test(){
+  // create(url,<your sheet name>,<[your data]>)
+  // console.log(read(url,<your sheet name>))
+  // update(url,<your sheet name>,<id in your sheet>,<[your data]>)
+  // remove(url,<your sheet name>,<id in your sheet>")
+}
+
+// standard function 
+// return active spreadsheet and active sheet 
+function initSheet(url, sheetname){
+  let sheet = SpreadsheetApp.openByUrl(url)
+  return sheet.getSheetByName(sheetname)
+}
+// generate unique ID 
+function setID(){
+  let id = Utilities.getUuid().split("-").join("")
+  return id.slice(0, 9)
+}
+// -------------------------------------------
+
+// 1.Create
+function create(sheetUrl,addToSheet,addData) {
+  let data = []
+  data.push(setID())
+  data.push(Date())
+  for(let i in addData){
+    data.push(addData[i])
+  }
+  initSheet(sheetUrl,addToSheet).appendRow(data)
+}
+
+// 2.Read
+function read(sheetUrl,readFromSheet){
+  let data = initSheet(sheetUrl,readFromSheet).getDataRange().getValues()
+  data.shift()
+  data.reverse()
+  return data 
+}
+
+// 3.Update
+function update(sheetUrl, updateToSheet, id, updateData){
+  let sheet = initSheet(sheetUrl, updateToSheet)
+  for(let i=1; i<=sheet.getLastRow();i++){
+    if(sheet.getRange(i,1).getValue() == id){
+      for(let j=3; j<= sheet.getLastColumn();j++){
+        sheet.getRange(i,j).setValue(updateData[j-3])
+      }
+      break
+    }
+  }
+}
+
+// 4.delete
+function remove(sheetUrl, deleteAtSheet, id){
+  let sheet = initSheet(sheetUrl, deleteAtSheet)
+  for(let i=1; i<=sheet.getLastRow();i++){
+    if(sheet.getRange(i,1).getValue() == id){
+      sheet.deleteRow(i)
+      break
+    }
+  }
+}
