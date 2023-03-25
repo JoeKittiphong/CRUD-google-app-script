@@ -1,0 +1,119 @@
+const url = "<your google sheet URL>"
+
+function doGet(e){
+  if(e.parameter.method == "read"){
+    return readAPI(e)
+  }
+}
+function doPost(e) {
+  if(e.parameter.method == "create"){
+    return createAPI(e)
+  }
+  if(e.parameter.method == "update"){
+    return updateAPI(e)
+  }
+  if(e.parameter.method == "delete"){
+    return deleteAPI(e)
+  }
+}
+
+// return active spreadsheet and active sheet 
+function initSheet(url, sheetname){
+  let sheet = SpreadsheetApp.openByUrl(url)
+  return sheet.getSheetByName(sheetname)
+}
+// generate unique ID 
+function setID(){
+  let id = Utilities.getUuid().split("-").join("")
+  return id.slice(0, 9)
+}
+// -------------------------------------------
+
+// 1.Create
+function create(sheetUrl,addToSheet,addData) {
+  let data = []
+  data.push(setID())
+  data.push(Date())
+  for(let i in addData){
+    data.push(addData[i])
+  }
+  initSheet(sheetUrl,addToSheet).appendRow(data)
+  return ContentService.createTextOutput("Create success").setMimeType(ContentService.MimeType.TEXT)
+}
+
+// attrach with post API 
+// parameter : sheetName
+// JSON : {<your data>}
+function createAPI(e){
+  let createData = JSON.parse(e.postData.contents)
+  let data = []
+  for(let i in createData){
+    data.push(createData[i])
+  }
+  return create(url,e.parameter.sheetName,data)
+}
+
+// 2.Read
+function read(sheetUrl,readFromSheet){
+  let data = initSheet(sheetUrl,readFromSheet).getDataRange().getValues()
+  data.shift()
+  data.reverse()
+  return data 
+}
+
+// attrach with post API 
+// parameter : sheetName
+function readAPI(e){
+  let data = read(url,e.parameter.sheetName)
+  return ContentService.createTextOutput(JSON.stringify(data)).setMimeType(ContentService.MimeType.JSON)
+}
+
+
+// 3.Update
+function update(sheetUrl, updateToSheet, id, updateData){
+  let sheet = initSheet(sheetUrl, updateToSheet)
+  for(let i=1; i<=sheet.getLastRow();i++){
+    if(sheet.getRange(i,1).getValue() == id){
+      for(let j=3; j<= sheet.getLastColumn();j++){
+        sheet.getRange(i,j).setValue(updateData[j-3])
+      }
+      break
+    }
+  }
+}
+
+// attrach with post API 
+// parameter : sheetName
+// JSON : {<id>,<your update data>}
+function updateAPI(e){
+  let updateData = JSON.parse(e.postData.contents)
+  let data = []
+  for(let i in updateData){
+    data.push(updateData[i])
+  }
+  let updateID = data[0]
+  data.pop()
+  return update(url,e.parameter.sheetName, updateID,data)
+}
+
+// 4.delete
+function remove(sheetUrl, deleteAtSheet, id){
+  let sheet = initSheet(sheetUrl, deleteAtSheet)
+  for(let i=1; i<=sheet.getLastRow();i++){
+    if(sheet.getRange(i,1).getValue() == id){
+      sheet.deleteRow(i)
+      break
+    }
+  }
+}
+
+function deleteAPI(e){
+  let updateData = JSON.parse(e.postData.contents)
+  let data = []
+  for(let i in updateData){
+    data.push(updateData[i])
+  }
+  let removeID = data[0]
+  data.pop()
+  return remove(url,e.parameter.sheetName, removeID)
+}
