@@ -27,13 +27,21 @@ function setID(){
   let id = Utilities.getUuid().split("-").join("")
   return id.slice(0, 9)
 }
+
+function timeStamp(){
+  let toDay = new Date()
+  let dayNow = toDay.getFullYear()+"/"+toDay.getMonth()+"/"+toDay.getDate()
+  let timeNow = toDay.getHours()+":"+toDay.getMinutes()+":"+toDay.getSeconds()
+  
+  return dayNow+", "+timeNow
+}
 // -------------------------------------------
 
 // 1.Create
 function create(sheetUrl,addToSheet,addData) {
   let data = []
   data.push(setID())
-  data.push(Date())
+  data.push(timeStamp())
   for(let i in addData){
     data.push(addData[i])
   }
